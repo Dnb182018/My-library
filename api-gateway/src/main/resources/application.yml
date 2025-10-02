@@ -1,0 +1,53 @@
+
+# Default Spring Profile
+server:
+  error:
+    include-message: always
+
+logging:
+  level:
+    root: INFO
+    com.library: DEBUG
+    org.springframework.data.mongodb.core.MongoTemplate: DEBUG
+
+
+
+app:
+  catalogs-service:
+    host: catalogs-service
+    port: 7001
+  members-service:
+    host: members-service
+    port: 7002
+  fines-service:
+    host: fines-service
+    port: 7003
+  loans-service:
+    host: loans-service
+    port: 7004
+
+---
+
+# for docker
+
+spring:
+  config:
+    activate:
+      on-profile: docker
+
+server.port: 8080
+
+app:
+  catalogs-service:
+    host: catalogs-service
+    port: 8080
+  members-service:
+    host: members-service
+    port: 8080
+  fines-service:
+    host: fines-service
+    port: 8080
+  loans-service:
+    host: loans-service
+    port: 8080
+

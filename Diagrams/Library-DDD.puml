@@ -1,0 +1,489 @@
+
+@startuml
+'https://plantuml.com/sequence-diagram
+
+hide circle
+top to bottom direction
+scale 0.2
+!define ENTITY(entityName) class entityName << Entity >>
+!define ENUM(enumName) class enumName << Enum >>
+!define AGGREGATE(aggregateName) class aggregateName << Aggregate >>
+!define AGGREGATE_ROOT(aggregateRootName) class aggregateRootName << Aggregate Root >>
+!define AGGREGATE_ROOT_ENTITY(aggregateRootEntityName) class aggregateRootEntityName << Aggregate Root >> << Entity >>
+!define VALUE_OBJECT(valueObjectName) class valueObjectName << Value Object >>
+!pragma useVerticalIf on
+skinparam dpi 350
+skinparam packageStyle rectangle
+skinparam rectangle {
+    BackgroundColor #f7f4eb
+    BorderColor Black
+}
+
+rectangle "LIBRARY" as BoundedContextCarDealership #line.dashed {
+
+Package "Fine Management Sub-Domain" as FineManagement <<Rectangle>> #DFBDF4 {
+
+    ENTITY(Fine) #Bisque {
+        issuedDate: Date
+        status: Status
+    }
+
+
+
+    VALUE_OBJECT(FineIdentifier){
+        fineId: UUID
+    }
+
+
+
+    ENUM(Status){
+        PAID
+        UNPAID
+    }
+
+
+    VALUE_OBJECT(Payment) #Bisque {
+        amount: Decimal
+        currency:Currency
+        paymentDate: Date
+        status: PaymentStatus
+        paymentMethod: PaymentMethods
+    }
+
+
+
+    ENUM(PaymentStatus){
+        PENDING
+        COMPLETE
+        FAILED
+    }
+
+    ENUM(PaymentMethod){
+        CREDIT
+        DEBIT
+        VISA
+        PAYPAL
+    }
+
+    ENUM(Currency){
+        USD
+        CAD
+    }
+
+
+
+    Fine --> FineIdentifier
+    Fine --> Status
+    Payment --> PaymentMethod
+    Payment --> Currency
+    Fine"1" --> "1"Payment
+    Payment --> PaymentStatus
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+Package "Catalog Management Sub-Domain" as CatalogManagement <<Rectangle>> #lightpink {
+
+
+    AGGREGATE_ROOT(Catalog) #lightblue {
+       location : CatalogLocations
+    }
+
+
+    VALUE_OBJECT(CatalogIdentifier) #Tan{
+            catalogId: UUID
+    }
+
+
+
+
+    ENUM (CatalogLocations){
+        LAPL
+        NYPL
+        OCLC
+        LOC
+        BRITISH
+        SFPL
+        CPL
+        SEATTLE
+        TPL
+        BPL
+        NLA
+        LAC
+        VPL
+        OPL
+
+    }
+
+    ENTITY(Book) #Bisque {
+        title: String
+        type: BookType
+        quanties: Decimal
+        isbn: String
+        languages: Lauguage
+        status: BookStatus
+        descriptions: String
+
+    }
+
+    VALUE_OBJECT(BookIdentifier) #Tan{
+        bookId: UUID
+    }
+
+
+
+
+    ENUM(BookType){
+        HARDCOVER
+        PAPERPACK
+        EBOOK
+        AUDIOBOOK
+    }
+
+
+    ENUM(BookStatus){
+        AVAILABLE
+        NOT_AVAILABLE
+        RESERVE
+        LOST
+
+    }
+
+
+    ENUM(Language){
+        ENGLISH
+        FRENCH
+        SPANISH
+    }
+
+
+    ENTITY(Author) #Bisque {
+        firstName: String
+        lastName: String
+        birthdate: Date
+        info: String
+    }
+
+
+    VALUE_OBJECT(AuthorIdentifier) #Tan{
+        authorId: UUID
+    }
+
+
+
+    Book -U-> BookIdentifier
+    Author -U-> AuthorIdentifier
+    Book "1..*" *--> "1..*" AuthorIdentifier
+    Book --> BookType
+    Book --> BookStatus
+    Book --> Language
+    Catalog --> CatalogIdentifier
+    Catalog "1" o-L-> "0..*"  BookIdentifier
+    Catalog --> CatalogLocations
+}
+
+
+
+
+
+
+
+
+
+
+
+
+Package "Member's Account Management Sub-Domain" as MemberAccountManagement <<Rectangle>> #yellow{
+    ENTITY(User) #Bisque {
+        firstName: String
+        lastName: String
+        email: String
+
+    }
+
+
+    VALUE_OBJECT(UserIdentifier) #Tan{
+        userId: UUID
+    }
+
+    AGGREGATE_ROOT(MemberRecord) #lightblue{
+        membershipStartDate: Date
+        memeberShipEndDate: Date
+        memberType: MemberType
+    }
+
+
+    ENUM(MemberType) {
+        REGULAR
+        STUDENT
+        VIP
+        SENIOR
+        FAMILY
+    }
+
+
+    VALUE_OBJECT(MemberRecordIdentifier) #Tan{
+        memberId: UUID
+    }
+
+
+    VALUE_OBJECT(UserPhoneNumber) #Tan{
+        type: PhoneType
+        phoneNumber: String
+    }
+
+    ENUM(PhoneType) {
+        HOME
+        WORK
+        MOBILE
+    }
+
+    VALUE_OBJECT(UserAddress) #Tan{
+         streetName: String
+         city: String
+         province: ProvinceEnum
+         postalCode: String
+    }
+
+
+
+    User --> UserIdentifier
+    User "1" o--> "1" UserAddress
+    User "1" o--> "1..*" UserPhoneNumber
+    UserPhoneNumber --> PhoneType
+    MemberRecord --> MemberRecordIdentifier
+    MemberRecord"1" --> "1..*"UserIdentifier
+    MemberRecord --> MemberType
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Package "Loan Sub-Domain" as BookLoanManagement <<Rectangle>> #cyan {
+
+  note "Invariant: [When LoanStatus is ACTIVES, BookStatus will be set as NOT_AVAILABLE]" as catalogInvariant1
+
+    AGGREGATE_ROOT(Loan) #lightblue {
+        loanDateStart: Date
+        loanDateEnd:Date
+        loanStatus: LoanStatus
+
+    }
+
+    VALUE_OBJECT(LoanIdentifier) #Tan{
+        loanId: UUID
+    }
+
+    ENUM(LoanStatus) #white{
+        ACTIVES
+        RETURNED
+        OVERDUE
+        LOST
+    }
+
+
+    Loan --> LoanIdentifier
+    Loan --> LoanStatus
+    Loan "1" o-U-> "0..*" FineIdentifier
+    Loan "0..*" -U-> "1" MemberRecordIdentifier
+    Loan"1..*" --> "1..*" BookIdentifier
+
+
+
+
+}
+
+
+
+
+
+
+
+Package "Human Resources Sub-Domain" as LibrarianManagement <<Rectangle>> #lightgrey {
+
+    ENTITY(Librarian) #Bisque {
+        sin: String
+        firstName: String
+        lastName: String
+        email: String
+        commissionRate: Decimal
+
+    }
+
+
+    ENTITY(Salary) #Bisque {
+        amount: Decimal
+        currency: Currency
+
+    }
+
+
+    ENUM(Currency) {
+        CAD
+        USD
+    }
+
+
+    VALUE_OBJECT(LibrarianIdentifier) #Bisque{
+        librarianId: UUID
+    }
+
+
+    VALUE_OBJECT(LibrarianAddress) #Bisque{
+        streetNumber : String
+        streetName: String
+        city: String
+        province: ProvinceEnum
+        postalCode: String
+    }
+
+    VALUE_OBJECT(LibrarianPhoneNumber) #Bisque{
+        type: PhoneType
+        phoneNumber: String
+    }
+
+    ENUM(PhoneType) {
+        HOME
+        WORK
+        MOBILE
+    }
+
+
+
+
+    Librarian -U-> LibrarianIdentifier
+    Librarian "1" o-R-> "1" LibrarianAddress
+    Librarian "1" o--> "1..*" LibrarianPhoneNumber
+    LibrarianPhoneNumber --> PhoneType
+    Loan --> LibrarianIdentifier
+    Librarian --> Salary
+    Salary --> Currency
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+    Package "Alert Management Sub-Domain" as AlertManagement <<Rectangle>> #lightgrey {
+
+        ENTITY(Alert) #Bisque {
+            contactMethod: ContactMethod
+            message: String
+            dateCreated: Date
+            alertStatus: AlertStatus
+        }
+
+
+        ENUM(ContactMethod) #white{
+            EMAIL
+            SMS/TEXT_MESSAGE
+            NOTIFICATION
+            CALL
+        }
+
+        ENUM(AlertType) #white{
+            FINE
+            OVERDUE
+            PAYMENT_REMINDER
+            LOAN_APPROVAL
+        }
+
+
+        ENUM(AlertStatus) #white{
+            PENDING
+            SENT
+            FAILED
+        }
+
+
+        VALUE_OBJECT(AlertIdentifier) #Tan{
+            alertId:UUID
+
+        }
+
+
+
+        Alert -U-> AlertIdentifier
+        Alert -U-> AlertType
+        Alert -U-> ContactMethod
+        Alert -U-> AlertStatus
+        Alert"0..*" --> "1"MemberRecordIdentifier
+        Alert -U-> Loan
+
+
+    }
+
+
+
+
+
+
+
+     Package "User Communications Sub-Domain" as UserCommunications <<Rectangle>> #lightgrey {
+
+
+         ENTITY(UserCommunications) #Bisque {
+            communicationType: CommunicationTypeEnum
+            communicationDate: Date
+            communicationTime: Time
+            communicationContent: String
+        }
+
+        ENUM(CommunicationType) {
+            EMAIL
+            PHONE
+            WEBSITE
+        }
+
+        VALUE_OBJECT(CommunicationIdentifier) #Tan{
+            communicationId: UUID
+        }
+
+        UserCommunications --> CommunicationType
+        UserCommunications --> CommunicationIdentifier
+        UserCommunications -U-> UserIdentifier
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+@enduml

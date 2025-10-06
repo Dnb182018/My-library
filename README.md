@@ -11,7 +11,7 @@ Comprehensive error handling
 Authentication and authorization
 Detailed API documentation
 Technology Stack
-------------------------------------
+
 #Java
 Spring Boot
 Spring Data JPA
